@@ -1,17 +1,18 @@
 # YouTube Downloader Telegram Bot
 
-A powerful Telegram bot that downloads audio or video from YouTube videos and playlists with quality selection options.
+A powerful Telegram bot that downloads audio or video from YouTube videos and playlists with quality selection options, including **4K, 2K, and 1080p** support.
 
 ## Features
 
 🎵 **Audio Downloads**: Convert YouTube videos to high-quality audio files
-🎬 **Video Downloads**: Download YouTube videos in various qualities
+🎬 **Video Downloads**: Download YouTube videos in various qualities including **4K Ultra HD**
 📋 **Playlist Support**: Download entire playlists (up to 20 videos)
 🎚️ **Quality Selection**: Choose from best, high, medium, or low quality
 📱 **User-Friendly**: Interactive buttons and clear status updates
 🧹 **Auto-Cleanup**: Files are automatically removed after sending
 ⚡ **Fast Processing**: Efficient downloading with yt-dlp
 🚫 **No File Limits**: Download any quality without size restrictions
+🆕 **4K Support**: Download videos in Ultra High Definition (2160p)
 
 ## Prerequisites
 
@@ -90,11 +91,13 @@ python bot.py
 - **Medium**: Balanced quality (64-128kbps)
 - **Low**: Smaller file size (64kbps and below)
 
-#### 🎬 **Video Quality:**
-- **Best**: Highest available quality (usually 1080p+)
-- **High**: Good quality (720p+)
-- **Medium**: Balanced quality (480p+)
-- **Low**: Smaller file size (360p and below)
+#### 🎬 **Video Quality (NEW!):**
+- **4K (2160p)**: Ultra High Definition - Best quality available
+- **2K (1440p)**: Quad High Definition - Very high quality  
+- **1080p**: Full High Definition - High quality, good balance
+- **720p**: High Definition - Good quality, smaller files
+- **480p**: Standard Definition - Medium quality, smaller files
+- **360p**: Low Definition - Lower quality, smallest files
 
 ## Supported URLs
 
@@ -125,12 +128,14 @@ AUDIO_QUALITY_PRESETS = {
     'low': 'bestaudio[ext=m4a][abr<=64]/bestaudio[ext=mp3][abr<=64]/bestaudio[abr<=64]'
 }
 
-# Video quality presets
+# Enhanced video quality presets with 4K support
 VIDEO_QUALITY_PRESETS = {
-    'best': 'best[ext=mp4]/best',
-    'high': 'best[height<=1080][ext=mp4]/best[height<=1080]',
-    'medium': 'best[height<=720][ext=mp4]/best[height<=720]',
-    'low': 'best[height<=480][ext=mp4]/best[height<=480]'
+    '4k': 'best[height>=2160][ext=mp4]/best[height>=2160]/best[ext=mp4]/best',
+    '2k': 'best[height>=1440][ext=mp4]/best[height>=1440]/best[ext=mp4]/best',
+    '1080p': 'best[height>=1080][ext=mp4]/best[height>=1080]/best[ext=mp4]/best',
+    '720p': 'best[height>=720][ext=mp4]/best[height>=720]/best[ext=mp4]/best',
+    '480p': 'best[height>=480][ext=mp4]/best[height>=480]/best[ext=mp4]/best',
+    '360p': 'best[height>=360][ext=mp4]/best[height>=360]/best[ext=mp4]/best'
 }
 ```
 
@@ -140,6 +145,7 @@ VIDEO_QUALITY_PRESETS = {
 - **Audio Formats**: Outputs MP3 format for compatibility
 - **Video Formats**: MP4, WebM, MKV
 - **Rate Limiting**: Built-in delays to avoid overwhelming servers
+- **File Size**: Telegram has a 2GB file size limit
 
 ## Troubleshooting
 
@@ -162,6 +168,11 @@ VIDEO_QUALITY_PRESETS = {
    - Telegram has a 2GB file size limit
    - Use lower quality settings for very long videos
    - Consider downloading in parts for extremely long content
+
+5. **4K/2K download issues:**
+   - Ensure you have sufficient bandwidth
+   - 4K downloads may take significantly longer
+   - Some videos may not have 4K quality available
 
 ### Logs
 

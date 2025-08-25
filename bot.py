@@ -31,6 +31,14 @@ I can help you download audio or video from YouTube videos and playlists.
 • Select your preferred quality
 • Support for both single videos and playlists
 
+🎬 **Video Quality Options:**
+• 4K (2160p) - Ultra High Definition
+• 2K (1440p) - Quad High Definition  
+• 1080p - Full High Definition
+• 720p - High Definition
+• 480p - Standard Definition
+• 360p - Low Definition
+
 🔧 **Commands:**
 /start - Show this help message
 /help - Show detailed help
@@ -57,7 +65,7 @@ I can help you download audio or video from YouTube videos and playlists.
 📥 **Downloading Single Videos:**
 1. Send a YouTube video URL
 2. Choose between audio or video
-3. Select quality (best, high, medium, low)
+3. Select quality (see options below)
 4. Wait for download to complete
 5. Receive the file
 
@@ -75,10 +83,12 @@ I can help you download audio or video from YouTube videos and playlists.
 • **Low**: Smaller file size (64kbps and below)
 
 🎬 **Video Quality Options:**
-• **Best**: Highest available quality (usually 1080p+)
-• **High**: Good quality (720p+)
-• **Medium**: Balanced quality (480p+)
-• **Low**: Smaller file size (360p and below)
+• **4K (2160p)**: Ultra High Definition - Best quality available
+• **2K (1440p)**: Quad High Definition - Very high quality
+• **1080p**: Full High Definition - High quality, good balance
+• **720p**: High Definition - Good quality, smaller files
+• **480p**: Standard Definition - Medium quality, smaller files
+• **360p**: Low Definition - Lower quality, smallest files
 
 ⚠️ **Limitations:**
 • Maximum playlist items: 20
@@ -95,6 +105,7 @@ I can help you download audio or video from YouTube videos and playlists.
 • Use /quality to set your preferred quality
 • Use /cleanup to free up space
 • For large playlists, consider downloading in smaller batches
+• 4K and 2K downloads may take longer and create larger files
         """
         
         await update.message.reply_text(help_text)
@@ -228,12 +239,42 @@ I can help you download audio or video from YouTube videos and playlists.
                 quality_presets = VIDEO_QUALITY_PRESETS
                 type_text = "🎬 Video"
             
+            # Create keyboard with quality options
             keyboard = []
-            for quality, description in quality_presets.items():
-                keyboard.append([InlineKeyboardButton(
-                    f"{quality.title()} Quality", 
+            row = []
+            for i, (quality, description) in enumerate(quality_presets.items()):
+                # Create quality labels with resolution info
+                if download_type == 'video':
+                    if quality == '4k':
+                        label = "4K (2160p)"
+                    elif quality == '2k':
+                        label = "2K (1440p)"
+                    elif quality == '1080p':
+                        label = "1080p (FHD)"
+                    elif quality == '720p':
+                        label = "720p (HD)"
+                    elif quality == '480p':
+                        label = "480p (SD)"
+                    elif quality == '360p':
+                        label = "360p (LD)"
+                    else:
+                        label = f"{quality.title()}"
+                else:
+                    label = f"{quality.title()}"
+                
+                row.append(InlineKeyboardButton(
+                    label, 
                     callback_data=f"download_{download_type}_{quality}_{user_id}"
-                )])
+                ))
+                
+                # Create new row every 2 buttons for better layout
+                if len(row) == 2:
+                    keyboard.append(row)
+                    row = []
+            
+            # Add remaining buttons if any
+            if row:
+                keyboard.append(row)
             
             reply_markup = InlineKeyboardMarkup(keyboard)
             await query.edit_message_text(
@@ -262,10 +303,23 @@ I can help you download audio or video from YouTube videos and playlists.
             url = user_state['url']
             is_playlist = user_state['is_playlist']
             
+            # Create quality display text
+            if download_type == 'video':
+                quality_display = {
+                    '4k': '4K (2160p)',
+                    '2k': '2K (1440p)',
+                    '1080p': '1080p (FHD)',
+                    '720p': '720p (HD)',
+                    '480p': '480p (SD)',
+                    '360p': '360p (LD)'
+                }.get(quality, quality.title())
+            else:
+                quality_display = quality.title()
+            
             # Update status message
             type_text = "🎵 Audio" if download_type == 'audio' else "🎬 Video"
             await query.edit_message_text(
-                f"⏳ Downloading {type_text} with {quality.title()} quality...\n"
+                f"⏳ Downloading {type_text} with {quality_display} quality...\n"
                 f"Please wait, this may take a while."
             )
             
@@ -297,7 +351,7 @@ I can help you download audio or video from YouTube videos and playlists.
                     with open(file_path, 'rb') as video_file:
                         await query.message.reply_video(
                             video_file,
-                            caption=f"YouTube Video - {quality.title()} Quality"
+                            caption=f"YouTube Video - {quality.upper()} Quality"
                         )
                 
                 # Clean up the file
@@ -340,7 +394,7 @@ I can help you download audio or video from YouTube videos and playlists.
                                 with open(file_path, 'rb') as video_file:
                                     await query.message.reply_video(
                                         video_file,
-                                        caption=f"{i+1:02d} - YouTube Playlist - {quality.title()} Quality"
+                                        caption=f"{i+1:02d} - YouTube Playlist - {quality.upper()} Quality"
                                     )
                             
                             # Clean up the file

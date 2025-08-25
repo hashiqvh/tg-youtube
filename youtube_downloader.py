@@ -3,7 +3,7 @@ import asyncio
 import yt_dlp
 from typing import Dict, List, Optional, Tuple
 import logging
-from config import DOWNLOAD_PATH, AUDIO_QUALITY_PRESETS, VIDEO_QUALITY_PRESETS, MAX_PLAYLIST_ITEMS
+from config import DOWNLOAD_PATH, AUDIO_QUALITY_PRESETS, VIDEO_QUALITY_PRESETS, VIDEO_QUALITY_ALTERNATIVES, MAX_PLAYLIST_ITEMS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,8 +32,10 @@ class YouTubeDownloader:
                 'quiet': True,
             }
         else:  # video
-            quality_format = VIDEO_QUALITY_PRESETS.get(quality, VIDEO_QUALITY_PRESETS['best'])
-            return {
+            quality_format = VIDEO_QUALITY_PRESETS.get(quality, VIDEO_QUALITY_PRESETS['1080p'])
+            
+            # Enhanced video options for high quality
+            ydl_opts = {
                 'format': quality_format,
                 'outtmpl': os.path.join(self.download_path, output_template),
                 'writesubtitles': False,
@@ -42,6 +44,16 @@ class YouTubeDownloader:
                 'no_warnings': True,
                 'quiet': True,
             }
+            
+            # Add merge options for high-quality video+audio
+            if quality in ['4k', '2k', '1080p']:
+                ydl_opts['merge_output_format'] = 'mp4'
+                ydl_opts['postprocessors'] = [{
+                    'key': 'FFmpegVideoConvertor',
+                    'preferedformat': 'mp4',
+                }]
+            
+            return ydl_opts
     
     async def get_video_info(self, url: str) -> Optional[Dict]:
         """Get video information without downloading"""
@@ -52,6 +64,48 @@ class YouTubeDownloader:
         except Exception as e:
             logger.error(f"Error getting video info: {e}")
             return None
+    
+    async def get_available_video_formats(self, url: str) -> Dict:
+        """Get detailed information about available video formats"""
+        try:
+            with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                info = ydl.extract_info(url, download=False)
+                
+                if 'entries' in info:
+                    # It's a playlist, get info from first video
+                    if info['entries']:
+                        info = info['entries'][0]
+                    else:
+                        return {}
+                
+                formats = info.get('formats', [])
+                video_formats = {}
+                
+                for fmt in formats:
+                    if fmt.get('vcodec') != 'none' and fmt.get('height'):
+                        height = fmt.get('height', 0)
+                        ext = fmt.get('ext', 'unknown')
+                        filesize = fmt.get('filesize', 0)
+                        fps = fmt.get('fps', 0)
+                        
+                        if height not in video_formats:
+                            video_formats[height] = []
+                        
+                        video_formats[height].append({
+                            'ext': ext,
+                            'filesize': filesize,
+                            'fps': fps,
+                            'format_id': fmt.get('format_id', ''),
+                            'url': fmt.get('url', ''),
+                            'vcodec': fmt.get('vcodec', ''),
+                            'acodec': fmt.get('acodec', '')
+                        })
+                
+                return video_formats
+                
+        except Exception as e:
+            logger.error(f"Error getting video formats: {e}")
+            return {}
     
     async def download_single_video(self, url: str, download_type: str = 'audio', quality: str = 'best') -> Optional[str]:
         """Download a single video as audio or video"""
@@ -187,17 +241,30 @@ class YouTubeDownloader:
                     video_formats = [f for f in formats if f.get('vcodec') != 'none']
                     
                     qualities = []
+                    available_heights = set()
+                    
                     for fmt in video_formats:
                         height = fmt.get('height', 0)
                         if height > 0:
-                            if height >= 1080:
-                                qualities.append('best')
-                            elif height >= 720:
-                                qualities.append('high')
-                            elif height >= 480:
-                                qualities.append('medium')
-                            else:
-                                qualities.append('low')
+                            available_heights.add(height)
+                    
+                    # Map available heights to quality options
+                    if any(h >= 2160 for h in available_heights):
+                        qualities.append('4k')
+                    if any(h >= 1440 for h in available_heights):
+                        qualities.append('2k')
+                    if any(h >= 1080 for h in available_heights):
+                        qualities.append('1080p')
+                    if any(h >= 720 for h in available_heights):
+                        qualities.append('720p')
+                    if any(h >= 480 for h in available_heights):
+                        qualities.append('480p')
+                    if any(h >= 360 for h in available_heights):
+                        qualities.append('360p')
+                    
+                    # If no specific heights found, use fallback
+                    if not qualities:
+                        qualities = ['1080p', '720p', '480p', '360p']
                 
                 return list(set(qualities))  # Remove duplicates
                 
@@ -206,7 +273,7 @@ class YouTubeDownloader:
             if download_type == 'audio':
                 return ['best', 'high', 'medium', 'low']  # Fallback to default audio qualities
             else:
-                return ['best', 'high', 'medium', 'low']  # Fallback to default video qualities
+                return ['4k', '2k', '1080p', '720p', '480p', '360p']  # Fallback to default video qualities
     
     def cleanup_downloads(self):
         """Clean up downloaded files"""

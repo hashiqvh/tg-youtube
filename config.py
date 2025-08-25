@@ -23,12 +23,21 @@ AUDIO_QUALITY_PRESETS = {
     'low': 'bestaudio[ext=m4a][abr<=64]/bestaudio[ext=mp3][abr<=64]/bestaudio[abr<=64]'
 }
 
-# Quality presets for video
+# Enhanced quality presets for video with 4K and 1080p support
 VIDEO_QUALITY_PRESETS = {
-    'best': 'best[ext=mp4]/best',
-    'high': 'best[height<=1080][ext=mp4]/best[height<=1080]',
-    'medium': 'best[height<=720][ext=mp4]/best[height<=720]',
-    'low': 'best[height<=480][ext=mp4]/best[height<=480]'
+    '4k': 'best[height>=2160][ext=mp4]/best[height>=2160]/best[ext=mp4]/best',
+    '2k': 'best[height>=1440][ext=mp4]/best[height>=1440]/best[ext=mp4]/best',
+    '1080p': 'best[height>=1080][ext=mp4]/best[height>=1080]/best[ext=mp4]/best',
+    '720p': 'best[height>=720][ext=mp4]/best[height>=720]/best[ext=mp4]/best',
+    '480p': 'best[height>=480][ext=mp4]/best[height>=480]/best[ext=mp4]/best',
+    '360p': 'best[height>=360][ext=mp4]/best[height>=360]/best[ext=mp4]/best'
+}
+
+# Alternative quality presets for different use cases
+VIDEO_QUALITY_ALTERNATIVES = {
+    'best_quality': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+    'best_webm': 'bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=webm]/best',
+    'best_mkv': 'bestvideo[ext=mkv]+bestaudio[ext=mkv]/best[ext=mkv]/best'
 }
 
 # Playlist settings
